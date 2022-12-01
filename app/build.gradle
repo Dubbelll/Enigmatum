@@ -1,0 +1,44 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'org.jetbrains.kotlin.kapt'
+}
+
+android {
+    namespace 'com.musilitar.enigmatum'
+    compileSdk 33
+
+    defaultConfig {
+        applicationId "com.musilitar.enigmatum"
+        minSdk 30
+        targetSdk 33
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation libs.kotlinx.coroutines.core
+    implementation libs.kotlinx.coroutines.android
+    implementation libs.androidx.core.ktx
+    implementation libs.androidx.activity.ktx
+    implementation libs.androidx.lifecycle.runtime.ktx
+    implementation libs.androidx.lifecycle.viewmodel.ktx
+    implementation libs.android.material
+    implementation libs.androidx.wear
+    implementation libs.wear.watchface.complications.data
+    implementation libs.wear.watchface.complications.data.source
+    implementation libs.wear.watchface
+    implementation libs.wear.watchface.client
+    implementation libs.wear.watchface.complications.rendering
+    implementation libs.wear.watchface.data
+    implementation libs.wear.watchface.editor
+    implementation libs.wear.watchface.style
+}
