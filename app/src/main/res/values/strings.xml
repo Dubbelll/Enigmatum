@@ -2,4 +2,8 @@
     <string name="app_name" translatable="false">Enigmatum</string>
     <string name="watch_face_name" translatable="false">Enigmatum</string>
     <string name="configuration_title">Configuration</string>
+    <string name="hour_mode_setting">24 hours?</string>
+    <string name="hour_mode_setting_description">Should the clock use 24 hours?</string>
+    <string name="default_style_name">Default</string>
+    <string name="ambient_style_name">Ambient</string>
 </resources>

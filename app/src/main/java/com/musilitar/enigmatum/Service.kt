@@ -10,12 +10,8 @@ import androidx.wear.watchface.WatchFaceType
 import androidx.wear.watchface.WatchState
 import androidx.wear.watchface.style.CurrentUserStyleRepository
 import androidx.wear.watchface.style.UserStyleSchema
-import com.example.android.wearable.alpha.utils.createComplicationSlotManager
-import com.example.android.wearable.alpha.utils.createUserStyleSchema
 
-class EnigmatumWatchFaceService : WatchFaceService() {
-
-    // Used by Watch Face APIs to construct user setting options and repository.
+class Service : WatchFaceService() {
     override fun createUserStyleSchema(): UserStyleSchema =
         createUserStyleSchema(context = applicationContext)
 
@@ -27,8 +23,7 @@ class EnigmatumWatchFaceService : WatchFaceService() {
     ): WatchFace {
         Log.d(TAG, "createWatchFace()")
 
-        // Creates class that renders the watch face.
-        val renderer = EnigmatumWatchCanvasRenderer(
+        val renderer = CanvasRenderer(
             context = applicationContext,
             surfaceHolder = surfaceHolder,
             watchState = watchState,
@@ -37,7 +32,6 @@ class EnigmatumWatchFaceService : WatchFaceService() {
             canvasType = CanvasType.HARDWARE
         )
 
-        // Creates the watch face.
         return WatchFace(
             watchFaceType = WatchFaceType.ANALOG,
             renderer = renderer

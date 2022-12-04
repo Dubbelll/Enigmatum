@@ -9,22 +9,13 @@ import android.util.Log
 import android.view.SurfaceHolder
 import androidx.core.graphics.withRotation
 import androidx.core.graphics.withScale
-import androidx.wear.watchface.ComplicationSlotsManager
 import androidx.wear.watchface.DrawMode
 import androidx.wear.watchface.Renderer
 import androidx.wear.watchface.WatchState
-import androidx.wear.watchface.complications.rendering.CanvasComplicationDrawable
-import androidx.wear.watchface.complications.rendering.ComplicationDrawable
 import androidx.wear.watchface.style.CurrentUserStyleRepository
 import androidx.wear.watchface.style.UserStyle
 import androidx.wear.watchface.style.UserStyleSetting
 import androidx.wear.watchface.style.WatchFaceLayer
-import com.example.android.wearable.alpha.data.watchface.ColorStyleIdAndResourceIds
-import com.example.android.wearable.alpha.data.watchface.WatchFaceColorPalette.Companion.convertToWatchFaceColorPalette
-import com.example.android.wearable.alpha.data.watchface.WatchFaceData
-import com.example.android.wearable.alpha.utils.COLOR_STYLE_SETTING
-import com.example.android.wearable.alpha.utils.DRAW_HOUR_PIPS_STYLE_SETTING
-import com.example.android.wearable.alpha.utils.WATCH_HAND_LENGTH_STYLE_SETTING
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -35,47 +26,38 @@ import java.time.ZonedDateTime
 import kotlin.math.cos
 import kotlin.math.sin
 
-// Default for how long each frame is displayed at expected frame rate.
-private const val FRAME_PERIOD_MS_DEFAULT: Long = 16L
-
-/**
- * Renders watch face via data in Room database. Also, updates watch face state based on setting
- * changes by user via [userStyleRepository.addUserStyleListener()].
- */
-class EnigmatumWatchCanvasRenderer(
+class CanvasRenderer(
     private val context: Context,
     surfaceHolder: SurfaceHolder,
     watchState: WatchState,
-    private val complicationSlotsManager: ComplicationSlotsManager,
     currentUserStyleRepository: CurrentUserStyleRepository,
     canvasType: Int
-) : Renderer.CanvasRenderer2<EnigmatumWatchCanvasRenderer.AnalogSharedAssets>(
+) : Renderer.CanvasRenderer2<CanvasRenderer.SharedAssets>(
     surfaceHolder,
     currentUserStyleRepository,
     watchState,
     canvasType,
-    FRAME_PERIOD_MS_DEFAULT,
+    16L,
     clearWithBackgroundTintBeforeRenderingHighlightLayer = false
 ) {
-    class AnalogSharedAssets : SharedAssets {
+    class SharedAssets : Renderer.SharedAssets {
         override fun onDestroy() {
         }
     }
 
+    override suspend fun createSharedAssets(): SharedAssets {
+        return SharedAssets()
+    }
+
     private val scope: CoroutineScope =
         CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
-
-    // Represents all data needed to render the watch face. All value defaults are constants. Only
-    // three values are changeable by the user (color scheme, ticks being rendered, and length of
-    // the minute arm). Those dynamic values are saved in the watch face APIs and we update those
-    // here (in the renderer) through a Kotlin Flow.
-    private var watchFaceData: WatchFaceData = WatchFaceData()
+    private var data: Data = Data()
 
     // Converts resource ids into Colors and ComplicationDrawable.
     private var watchFaceColors = convertToWatchFaceColorPalette(
         context,
-        watchFaceData.activeColorStyle,
-        watchFaceData.ambientColorStyle
+        data.activeColorStyle,
+        data.ambientColorStyle
     )
 
     // Initializes paint object for painting the clock hands with default values.
@@ -112,94 +94,43 @@ class EnigmatumWatchCanvasRenderer(
     init {
         scope.launch {
             currentUserStyleRepository.userStyle.collect { userStyle ->
-                updateWatchFaceData(userStyle)
+                updateData(userStyle)
             }
         }
     }
 
-    override suspend fun createSharedAssets(): AnalogSharedAssets {
-        return AnalogSharedAssets()
-    }
+    private fun updateData(userStyle: UserStyle) {
+        Log.d(TAG, "updateData(): $userStyle")
 
-    /*
-     * Triggered when the user makes changes to the watch face through the settings activity. The
-     * function is called by a flow.
-     */
-    private fun updateWatchFaceData(userStyle: UserStyle) {
-        Log.d(TAG, "updateWatchFace(): $userStyle")
+        var updatedData: Data = data
+        for (entry in userStyle) {
+            when (entry.key.id.toString()) {
+                DISPLAY_TWENTY_FOUR_HOURS_SETTING -> {
+                    val option = entry.value as UserStyleSetting.BooleanUserStyleSetting.BooleanOption
 
-        var newWatchFaceData: WatchFaceData = watchFaceData
-
-        // Loops through user style and applies new values to watchFaceData.
-        for (options in userStyle) {
-            when (options.key.id.toString()) {
-                COLOR_STYLE_SETTING -> {
-                    val listOption = options.value as
-                            UserStyleSetting.ListUserStyleSetting.ListOption
-
-                    newWatchFaceData = newWatchFaceData.copy(
-                        activeColorStyle = ColorStyleIdAndResourceIds.getColorStyleConfig(
-                            listOption.id.toString()
-                        )
-                    )
-                }
-                DRAW_HOUR_PIPS_STYLE_SETTING -> {
-                    val booleanValue = options.value as
-                            UserStyleSetting.BooleanUserStyleSetting.BooleanOption
-
-                    newWatchFaceData = newWatchFaceData.copy(
-                        drawHourPips = booleanValue.value
-                    )
-                }
-                WATCH_HAND_LENGTH_STYLE_SETTING -> {
-                    val doubleValue = options.value as
-                            UserStyleSetting.DoubleRangeUserStyleSetting.DoubleRangeOption
-
-                    // The arm lengths are usually only calculated the first time the watch face is
-                    // loaded to reduce the ops in the onDraw(). Because we updated the minute hand
-                    // watch length, we need to trigger a recalculation.
-                    armLengthChangedRecalculateClockHands = true
-
-                    // Updates length of minute hand based on edits from user.
-                    val newMinuteHandDimensions = newWatchFaceData.minuteHandDimensions.copy(
-                        lengthFraction = doubleValue.value.toFloat()
-                    )
-
-                    newWatchFaceData = newWatchFaceData.copy(
-                        minuteHandDimensions = newMinuteHandDimensions
+                    updatedData = updatedData.copy(
+                        displayTwentyFourHours = option.value
                     )
                 }
             }
         }
 
         // Only updates if something changed.
-        if (watchFaceData != newWatchFaceData) {
-            watchFaceData = newWatchFaceData
+        if (data != updatedData) {
+            data = updatedData
 
             // Recreates Color and ComplicationDrawable from resource ids.
             watchFaceColors = convertToWatchFaceColorPalette(
                 context,
-                watchFaceData.activeColorStyle,
-                watchFaceData.ambientColorStyle
+                data.activeColorStyle,
+                data.ambientColorStyle
             )
-
-            // Applies the user chosen complication color scheme changes. ComplicationDrawables for
-            // each of the styles are defined in XML so we need to replace the complication's
-            // drawables.
-            for ((_, complication) in complicationSlotsManager.complicationSlots) {
-                ComplicationDrawable.getDrawable(
-                    context,
-                    watchFaceColors.complicationStyleDrawableId
-                )?.let {
-                    (complication.renderer as CanvasComplicationDrawable).drawable = it
-                }
-            }
         }
     }
 
     override fun onDestroy() {
         Log.d(TAG, "onDestroy()")
-        scope.cancel("AnalogWatchCanvasRenderer scope clear() request")
+        scope.cancel("CanvasRenderer scope cancel request")
         super.onDestroy()
     }
 
@@ -207,7 +138,7 @@ class EnigmatumWatchCanvasRenderer(
         canvas: Canvas,
         bounds: Rect,
         zonedDateTime: ZonedDateTime,
-        sharedAssets: AnalogSharedAssets
+        sharedAssets: SharedAssets
     ) {
         canvas.drawColor(renderParameters.highlightLayer!!.backgroundTint)
 
@@ -222,7 +153,7 @@ class EnigmatumWatchCanvasRenderer(
         canvas: Canvas,
         bounds: Rect,
         zonedDateTime: ZonedDateTime,
-        sharedAssets: AnalogSharedAssets
+        sharedAssets: SharedAssets
     ) {
         val backgroundColor = if (renderParameters.drawMode == DrawMode.AMBIENT) {
             watchFaceColors.ambientBackgroundColor
@@ -241,16 +172,16 @@ class EnigmatumWatchCanvasRenderer(
 
         if (renderParameters.drawMode == DrawMode.INTERACTIVE &&
             renderParameters.watchFaceLayers.contains(WatchFaceLayer.BASE) &&
-            watchFaceData.drawHourPips
+            data.drawHourPips
         ) {
             drawNumberStyleOuterElement(
                 canvas,
                 bounds,
-                watchFaceData.numberRadiusFraction,
-                watchFaceData.numberStyleOuterCircleRadiusFraction,
+                data.numberRadiusFraction,
+                data.numberStyleOuterCircleRadiusFraction,
                 watchFaceColors.activeOuterElementColor,
-                watchFaceData.numberStyleOuterCircleRadiusFraction,
-                watchFaceData.gapBetweenOuterCircleAndBorderFraction
+                data.numberStyleOuterCircleRadiusFraction,
+                data.gapBetweenOuterCircleAndBorderFraction
             )
         }
     }
@@ -350,33 +281,33 @@ class EnigmatumWatchCanvasRenderer(
         hourHandBorder =
             createClockHand(
                 bounds,
-                watchFaceData.hourHandDimensions.lengthFraction,
-                watchFaceData.hourHandDimensions.widthFraction,
-                watchFaceData.gapBetweenHandAndCenterFraction,
-                watchFaceData.hourHandDimensions.xRadiusRoundedCorners,
-                watchFaceData.hourHandDimensions.yRadiusRoundedCorners
+                data.hourHandDimensions.lengthFraction,
+                data.hourHandDimensions.widthFraction,
+                data.gapBetweenHandAndCenterFraction,
+                data.hourHandDimensions.xRadiusRoundedCorners,
+                data.hourHandDimensions.yRadiusRoundedCorners
             )
         hourHandFill = hourHandBorder
 
         minuteHandBorder =
             createClockHand(
                 bounds,
-                watchFaceData.minuteHandDimensions.lengthFraction,
-                watchFaceData.minuteHandDimensions.widthFraction,
-                watchFaceData.gapBetweenHandAndCenterFraction,
-                watchFaceData.minuteHandDimensions.xRadiusRoundedCorners,
-                watchFaceData.minuteHandDimensions.yRadiusRoundedCorners
+                data.minuteHandDimensions.lengthFraction,
+                data.minuteHandDimensions.widthFraction,
+                data.gapBetweenHandAndCenterFraction,
+                data.minuteHandDimensions.xRadiusRoundedCorners,
+                data.minuteHandDimensions.yRadiusRoundedCorners
             )
         minuteHandFill = minuteHandBorder
 
         secondHand =
             createClockHand(
                 bounds,
-                watchFaceData.secondHandDimensions.lengthFraction,
-                watchFaceData.secondHandDimensions.widthFraction,
-                watchFaceData.gapBetweenHandAndCenterFraction,
-                watchFaceData.secondHandDimensions.xRadiusRoundedCorners,
-                watchFaceData.secondHandDimensions.yRadiusRoundedCorners
+                data.secondHandDimensions.lengthFraction,
+                data.secondHandDimensions.widthFraction,
+                data.gapBetweenHandAndCenterFraction,
+                data.secondHandDimensions.xRadiusRoundedCorners,
+                data.secondHandDimensions.yRadiusRoundedCorners
             )
     }
 
@@ -495,7 +426,7 @@ class EnigmatumWatchCanvasRenderer(
     }
 
     companion object {
-        private const val TAG = "AnalogWatchCanvasRenderer"
+        private const val TAG = "CanvasRenderer"
 
         // Painted between pips on watch face for hour marks.
         private val HOUR_MARKS = arrayOf("3", "6", "9", "12")

@@ -3,4 +3,10 @@
     <color name="color_primary">#707070</color>
     <color name="color_secondary">#CCCCCC</color>
     <color name="color_primary_button">#000000</color>
+    <color name="default_hour">#707070</color>
+    <color name="default_minute">#CCCCCC</color>
+    <color name="default_second">#000000</color>
+    <color name="ambient_hour">#707070</color>
+    <color name="ambient_minute">#CCCCCC</color>
+    <color name="ambient_second">#000000</color>
 </resources>

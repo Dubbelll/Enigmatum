@@ -19,7 +19,7 @@
             android:value="true" />
 
         <service
-            android:name=".EnigmatumWatchFaceService"
+            android:name=".Service"
             android:directBootAware="true"
             android:exported="true"
             android:label="@string/watch_face_name"
