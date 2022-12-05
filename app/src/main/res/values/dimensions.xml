@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="hour_hand_size">100%</dimen>
+    <dimen name="hour_mark_size">10sp</dimen>
+    <dimen name="minute_hand_size">75%</dimen>
+    <dimen name="minute_mark_size">7.5sp</dimen>
+    <dimen name="second_hand_size">50%</dimen>
+    <dimen name="second_mark_size">5sp</dimen>
+</resources>

@@ -1,9 +1,7 @@
 package com.musilitar.enigmatum
 
 import android.content.Context
-import android.graphics.drawable.Icon
 import androidx.annotation.ColorRes
-import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.wear.watchface.style.UserStyleSetting
 import androidx.wear.watchface.style.UserStyleSetting.ListUserStyleSetting
@@ -11,6 +9,11 @@ import androidx.wear.watchface.style.UserStyleSetting.ListUserStyleSetting
 const val DISPLAY_TWENTY_FOUR_HOURS_DEFAULT = true
 
 data class Data(
+    val interactiveStyle: StyleResource = StyleResource.DEFAULT,
+    val ambientStyle: StyleResource = StyleResource.AMBIENT,
+    val dayHourMarks: List<String> = List(12) { (if (it == 0) 12 else it + 1).toString().padStart(2, '0') },
+    val nightHourMarks: List<String> = List(12) { (if (it == 0) it else it + 12).toString().padStart(2, '0') },
+    val minuteSecondMarks: List<String> = List(60) { (it + 1).toString().padStart(2, '0') },
     val displayTwentyFourHours: Boolean = DISPLAY_TWENTY_FOUR_HOURS_DEFAULT,
 )
 
@@ -18,9 +21,13 @@ data class ColorPalette(
     val interactiveHourColor: Int,
     val interactiveMinuteColor: Int,
     val interactiveSecondColor: Int,
+    val interactiveBackgroundColor: Int,
+    val interactiveTextColor: Int,
     val ambientHourColor: Int,
     val ambientMinuteColor: Int,
     val ambientSecondColor: Int,
+    val ambientBackgroundColor: Int,
+    val ambientTextColor: Int,
 ) {
     companion object {
         fun buildColorPalette(
@@ -29,13 +36,16 @@ data class ColorPalette(
             ambientStyle: StyleResource
         ): ColorPalette {
             return ColorPalette(
-                // Active colors
                 interactiveHourColor = context.getColor(interactiveStyle.hourColorId),
                 interactiveMinuteColor = context.getColor(interactiveStyle.minuteColorId),
                 interactiveSecondColor = context.getColor(interactiveStyle.secondColorId),
+                interactiveBackgroundColor = context.getColor(interactiveStyle.backgroundColorId),
+                interactiveTextColor = context.getColor(interactiveStyle.textColorId),
                 ambientHourColor = context.getColor(ambientStyle.hourColorId),
                 ambientMinuteColor = context.getColor(ambientStyle.minuteColorId),
                 ambientSecondColor = context.getColor(ambientStyle.secondColorId),
+                ambientBackgroundColor = context.getColor(ambientStyle.backgroundColorId),
+                ambientTextColor = context.getColor(ambientStyle.textColorId),
             )
         }
     }
@@ -43,35 +53,36 @@ data class ColorPalette(
 
 const val DEFAULT_STYLE_ID = "default_style_id"
 private const val DEFAULT_STYLE_NAME_RESOURCE_ID = R.string.default_style_name
-private const val DEFAULT_STYLE_ICON_ID = R.drawable.default_style
 
 const val AMBIENT_STYLE_ID = "ambient_style_id"
 private const val AMBIENT_STYLE_NAME_RESOURCE_ID = R.string.ambient_style_name
-private const val AMBIENT_STYLE_ICON_ID = R.drawable.ambient_style
 
 enum class StyleResource(
     val id: String,
     @StringRes val nameId: Int,
-    @DrawableRes val iconId: Int,
     @ColorRes val hourColorId: Int,
     @ColorRes val minuteColorId: Int,
     @ColorRes val secondColorId: Int,
+    @ColorRes val backgroundColorId: Int,
+    @ColorRes val textColorId: Int,
 ) {
     DEFAULT(
         id = DEFAULT_STYLE_ID,
         nameId = DEFAULT_STYLE_NAME_RESOURCE_ID,
-        iconId = DEFAULT_STYLE_ICON_ID,
         hourColorId = R.color.default_hour,
         minuteColorId = R.color.default_minute,
         secondColorId = R.color.default_second,
+        backgroundColorId = R.color.default_background,
+        textColorId = R.color.default_text,
     ),
     AMBIENT(
         id = AMBIENT_STYLE_ID,
         nameId = AMBIENT_STYLE_NAME_RESOURCE_ID,
-        iconId = AMBIENT_STYLE_ICON_ID,
         hourColorId = R.color.ambient_hour,
         minuteColorId = R.color.ambient_minute,
         secondColorId = R.color.ambient_second,
+        backgroundColorId = R.color.ambient_background,
+        textColorId = R.color.ambient_text,
     );
 
     companion object {
@@ -84,17 +95,14 @@ enum class StyleResource(
         }
 
         fun buildUserStyleOptions(context: Context): List<ListUserStyleSetting.ListOption> {
-            val colorStyleIdAndResourceIdsList = enumValues<StyleResource>()
+            val styleResources = enumValues<StyleResource>()
 
-            return colorStyleIdAndResourceIdsList.map { styleResource ->
+            return styleResources.map { styleResource ->
                 ListUserStyleSetting.ListOption(
                     UserStyleSetting.Option.Id(styleResource.id),
                     context.resources,
                     styleResource.nameId,
-                    Icon.createWithResource(
-                        context,
-                        styleResource.iconId
-                    )
+                    null,
                 )
             }
         }

@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="color_primary">#707070</color>
-    <color name="color_secondary">#CCCCCC</color>
-    <color name="color_primary_button">#000000</color>
-    <color name="default_hour">#707070</color>
-    <color name="default_minute">#CCCCCC</color>
-    <color name="default_second">#000000</color>
-    <color name="ambient_hour">#707070</color>
-    <color name="ambient_minute">#CCCCCC</color>
-    <color name="ambient_second">#000000</color>
+    <color name="default_hour">#FFC107</color>
+    <color name="default_minute">#E91E63</color>
+    <color name="default_second">#F3F3F3</color>
+    <color name="default_background">#0C0C0C</color>
+    <color name="default_text">#0C0C0C</color>
+    <color name="ambient_hour">#404040</color>
+    <color name="ambient_minute">#626262</color>
+    <color name="ambient_second">#949494</color>
+    <color name="ambient_background">#0C0C0C</color>
+    <color name="ambient_text">#0C0C0C</color>
 </resources>
