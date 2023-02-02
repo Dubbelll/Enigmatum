@@ -2,12 +2,7 @@ package com.musilitar.enigmatum
 
 import android.util.Log
 import android.view.SurfaceHolder
-import androidx.wear.watchface.CanvasType
-import androidx.wear.watchface.ComplicationSlotsManager
-import androidx.wear.watchface.WatchFace
-import androidx.wear.watchface.WatchFaceService
-import androidx.wear.watchface.WatchFaceType
-import androidx.wear.watchface.WatchState
+import androidx.wear.watchface.*
 import androidx.wear.watchface.style.CurrentUserStyleRepository
 import androidx.wear.watchface.style.UserStyleSchema
 
@@ -26,15 +21,13 @@ class Service : WatchFaceService() {
         val renderer = CanvasRenderer(
             context = applicationContext,
             surfaceHolder = surfaceHolder,
-            watchState = watchState,
-            complicationSlotsManager = complicationSlotsManager,
             currentUserStyleRepository = currentUserStyleRepository,
+            watchState = watchState,
             canvasType = CanvasType.HARDWARE
         )
 
         return WatchFace(
-            watchFaceType = WatchFaceType.ANALOG,
-            renderer = renderer
+            watchFaceType = WatchFaceType.ANALOG, renderer = renderer
         )
     }
 

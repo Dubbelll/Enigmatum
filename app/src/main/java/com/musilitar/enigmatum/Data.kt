@@ -3,6 +3,7 @@ package com.musilitar.enigmatum
 import android.content.Context
 import androidx.annotation.ColorRes
 import androidx.annotation.StringRes
+import androidx.wear.watchface.DrawMode
 import androidx.wear.watchface.style.UserStyleSetting
 import androidx.wear.watchface.style.UserStyleSetting.ListUserStyleSetting
 
@@ -11,8 +12,12 @@ const val DISPLAY_TWENTY_FOUR_HOURS_DEFAULT = true
 data class Data(
     val interactiveStyle: StyleResource = StyleResource.DEFAULT,
     val ambientStyle: StyleResource = StyleResource.AMBIENT,
-    val dayHourMarks: List<String> = List(12) { (if (it == 0) 12 else it + 1).toString().padStart(2, '0') },
-    val nightHourMarks: List<String> = List(12) { (if (it == 0) it else it + 12).toString().padStart(2, '0') },
+    val dayHourMarks: List<String> = List(12) {
+        (if (it == 0) 12 else it + 1).toString().padStart(2, '0')
+    },
+    val nightHourMarks: List<String> = List(12) {
+        (if (it == 0) it else it + 12).toString().padStart(2, '0')
+    },
     val minuteSecondMarks: List<String> = List(60) { (it + 1).toString().padStart(2, '0') },
     val displayTwentyFourHours: Boolean = DISPLAY_TWENTY_FOUR_HOURS_DEFAULT,
 )
@@ -29,11 +34,34 @@ data class ColorPalette(
     val ambientBackgroundColor: Int,
     val ambientTextColor: Int,
 ) {
+    fun hourColor(drawMode: DrawMode): Int {
+        return if (drawMode == DrawMode.AMBIENT) ambientHourColor
+        else interactiveHourColor
+    }
+
+    fun minuteColor(drawMode: DrawMode): Int {
+        return if (drawMode == DrawMode.AMBIENT) ambientMinuteColor
+        else interactiveMinuteColor
+    }
+
+    fun secondColor(drawMode: DrawMode): Int {
+        return if (drawMode == DrawMode.AMBIENT) ambientSecondColor
+        else interactiveSecondColor
+    }
+
+    fun backgroundColor(drawMode: DrawMode): Int {
+        return if (drawMode == DrawMode.AMBIENT) ambientBackgroundColor
+        else interactiveBackgroundColor
+    }
+
+    fun textColor(drawMode: DrawMode): Int {
+        return if (drawMode == DrawMode.AMBIENT) ambientTextColor
+        else interactiveTextColor
+    }
+
     companion object {
         fun buildColorPalette(
-            context: Context,
-            interactiveStyle: StyleResource,
-            ambientStyle: StyleResource
+            context: Context, interactiveStyle: StyleResource, ambientStyle: StyleResource
         ): ColorPalette {
             return ColorPalette(
                 interactiveHourColor = context.getColor(interactiveStyle.hourColorId),
