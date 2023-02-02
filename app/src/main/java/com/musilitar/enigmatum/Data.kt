@@ -13,10 +13,10 @@ data class Data(
     val interactiveStyle: StyleResource = StyleResource.DEFAULT,
     val ambientStyle: StyleResource = StyleResource.AMBIENT,
     val dayHourMarks: List<String> = List(12) {
-        (if (it == 0) 12 else it + 1).toString().padStart(2, '0')
+        (if (it == 0) 12 else it).toString().padStart(2, '0')
     },
     val nightHourMarks: List<String> = List(12) {
-        (if (it == 0) it else it + 12).toString().padStart(2, '0')
+        (if (it == 0) it else it + 11).toString().padStart(2, '0')
     },
     val minuteSecondMarks: List<String> = List(60) { (it + 1).toString().padStart(2, '0') },
     val displayTwentyFourHours: Boolean = DISPLAY_TWENTY_FOUR_HOURS_DEFAULT,

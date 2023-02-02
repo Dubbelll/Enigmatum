@@ -18,6 +18,8 @@ import com.musilitar.enigmatum.ColorPalette.Companion.buildColorPalette
 import kotlinx.coroutines.*
 import java.time.ZonedDateTime
 import kotlin.math.cos
+import kotlin.math.min
+import kotlin.math.roundToInt
 import kotlin.math.sin
 
 class CanvasRenderer(
@@ -135,17 +137,32 @@ class CanvasRenderer(
             textSize = context.resources.getDimensionPixelSize(textDimension).toFloat()
             color = colorPalette.textColor(renderParameters.drawMode)
         }
+        val radius = min(bounds.width(), bounds.height()) / 2.0f
+        val centerX = bounds.exactCenterX()
+        val centerY = bounds.exactCenterY()
+        val slice = 2 * Math.PI / marks.size
 
         for (i in marks.indices) {
             val mark = marks[i]
-            val rotation = 0.5f * (i + 1).toFloat() * Math.PI
-            val dx = sin(rotation).toFloat() * 0.45f * bounds.width().toFloat()
-            val dy = -cos(rotation).toFloat() * 0.45f * bounds.height().toFloat()
+            val angle = slice * i
+            val x = centerX + (radius * cos(angle))
+            val y = centerY + (radius * sin(angle))
+            val xPaddingDirection = centerX.roundToInt().compareTo(x.roundToInt())
+            val yPaddingDirection = centerY.roundToInt().compareTo(y.roundToInt())
+
             textPaint.getTextBounds(mark, 0, mark.length, textBounds)
+
+            val textWidth = textBounds.width()
+            val textHeight = textBounds.height()
+            val xTextPadding = -(textWidth / 2.0f)
+            val xPadding = (textWidth / 2.0f) * xPaddingDirection
+            val yTextPadding = textHeight / 2.0f
+            val yPadding = (textHeight / 2.0f) * yPaddingDirection
+
             canvas.drawText(
                 mark,
-                bounds.exactCenterX() + dx - textBounds.width() / 2.0f,
-                bounds.exactCenterY() + dy + textBounds.height() / 2.0f,
+                x.toFloat() + xTextPadding + xPadding,
+                y.toFloat() + yTextPadding + yPadding,
                 textPaint
             )
         }
