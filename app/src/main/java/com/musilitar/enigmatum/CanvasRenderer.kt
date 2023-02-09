@@ -1,10 +1,7 @@
 package com.musilitar.enigmatum
 
 import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Paint
-import android.graphics.Path
-import android.graphics.Rect
+import android.graphics.*
 import android.util.Log
 import android.view.SurfaceHolder
 import androidx.annotation.DimenRes
@@ -17,6 +14,7 @@ import androidx.wear.watchface.style.WatchFaceLayer
 import com.musilitar.enigmatum.ColorPalette.Companion.buildColorPalette
 import kotlinx.coroutines.*
 import java.time.ZonedDateTime
+import java.util.*
 import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.roundToInt
@@ -60,6 +58,11 @@ class CanvasRenderer(
                 updateData(userStyle)
             }
         }
+
+        // Shift marks by a quarter because the drawing starts at the 3 o'clock position
+        Collections.rotate(data.dayHourMarks, -3)
+        Collections.rotate(data.nightHourMarks, -3)
+        Collections.rotate(data.minuteSecondMarks, -15)
     }
 
     private fun updateData(userStyle: UserStyle) {
@@ -137,7 +140,8 @@ class CanvasRenderer(
             textSize = context.resources.getDimensionPixelSize(textDimension).toFloat()
             color = colorPalette.textColor(renderParameters.drawMode)
         }
-        val radius = min(bounds.width(), bounds.height()) / 2.0f
+        val diameter = min(bounds.width(), bounds.height())
+        val radius = diameter / 2.0f
         val centerX = bounds.exactCenterX()
         val centerY = bounds.exactCenterY()
         val slice = 2 * Math.PI / marks.size
@@ -147,23 +151,37 @@ class CanvasRenderer(
             val angle = slice * i
             val x = centerX + (radius * cos(angle))
             val y = centerY + (radius * sin(angle))
-            val xPaddingDirection = centerX.roundToInt().compareTo(x.roundToInt())
-            val yPaddingDirection = centerY.roundToInt().compareTo(y.roundToInt())
+            val xComparison = centerX.roundToInt().compareTo(x.roundToInt())
+            val yComparison = centerY.roundToInt().compareTo(y.roundToInt())
 
             textPaint.getTextBounds(mark, 0, mark.length, textBounds)
 
-            val textWidth = textBounds.width()
-            val textHeight = textBounds.height()
-            val xTextPadding = -(textWidth / 2.0f)
-            val xPadding = (textWidth / 2.0f) * xPaddingDirection
-            val yTextPadding = textHeight / 2.0f
-            val yPadding = (textHeight / 2.0f) * yPaddingDirection
+            val textWidthCenter = textBounds.width() / 2.0f
+            val textHeightCenter = textBounds.height() / 2.0f
+            val padding = 20f
+            val xPadding =
+                if (xComparison == -1) -textWidthCenter - padding else if (xComparison == 1) -textWidthCenter + padding else -textWidthCenter
+            val yPadding =
+                if (yComparison == -1) textHeightCenter - padding else if (yComparison == 1) textHeightCenter + padding else textHeightCenter
+//            val xTextPadding = -(textWidth / 2.0f)
+//            val xOffsetPadding = (textWidth / 2.0f) * xComparison
+//            val xPercentagePadding = diameter * 0.05f * xComparison
+//            val xPadding = (textBounds.width() + (diameter * 0.05f)) * xPaddingMultiplier
+//            val yTextPadding = textHeight / 2.0f
+//            val yOffsetPadding = (textHeight / 2.0f) * yComparison
+//            val yPercentagePadding = diameter * 0.05f * yComparison
+//            val yPadding = (textBounds.height() + (diameter * 0.05f)) * yPaddingMultiplier
 
             canvas.drawText(
                 mark,
-                x.toFloat() + xTextPadding + xPadding,
-                y.toFloat() + yTextPadding + yPadding,
+                x.toFloat() + xPadding,
+                y.toFloat() + yPadding,
                 textPaint
+            )
+            canvas.drawPoint(
+                x.toFloat() + (xComparison * 5),
+                y.toFloat() + (yComparison * 5),
+                Paint().apply { color = Color.RED }
             )
         }
     }
