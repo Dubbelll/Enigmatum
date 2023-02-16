@@ -17,7 +17,6 @@ import java.time.ZonedDateTime
 import java.util.*
 import kotlin.math.cos
 import kotlin.math.min
-import kotlin.math.roundToInt
 import kotlin.math.sin
 
 class CanvasRenderer(
@@ -140,7 +139,8 @@ class CanvasRenderer(
             textSize = context.resources.getDimensionPixelSize(textDimension).toFloat()
             color = colorPalette.textColor(renderParameters.drawMode)
         }
-        val diameter = min(bounds.width(), bounds.height())
+        val padding = 20f
+        val diameter = min(bounds.width(), bounds.height()) - (2 * padding)
         val radius = diameter / 2.0f
         val centerX = bounds.exactCenterX()
         val centerY = bounds.exactCenterY()
@@ -151,36 +151,23 @@ class CanvasRenderer(
             val angle = slice * i
             val x = centerX + (radius * cos(angle))
             val y = centerY + (radius * sin(angle))
-            val xComparison = centerX.roundToInt().compareTo(x.roundToInt())
-            val yComparison = centerY.roundToInt().compareTo(y.roundToInt())
 
             textPaint.getTextBounds(mark, 0, mark.length, textBounds)
 
-            val textWidthCenter = textBounds.width() / 2.0f
-            val textHeightCenter = textBounds.height() / 2.0f
-            val padding = 20f
-            val xPadding =
-                if (xComparison == -1) -textWidthCenter - padding else if (xComparison == 1) -textWidthCenter + padding else -textWidthCenter
-            val yPadding =
-                if (yComparison == -1) textHeightCenter - padding else if (yComparison == 1) textHeightCenter + padding else textHeightCenter
-//            val xTextPadding = -(textWidth / 2.0f)
-//            val xOffsetPadding = (textWidth / 2.0f) * xComparison
-//            val xPercentagePadding = diameter * 0.05f * xComparison
-//            val xPadding = (textBounds.width() + (diameter * 0.05f)) * xPaddingMultiplier
-//            val yTextPadding = textHeight / 2.0f
-//            val yOffsetPadding = (textHeight / 2.0f) * yComparison
-//            val yPercentagePadding = diameter * 0.05f * yComparison
-//            val yPadding = (textBounds.height() + (diameter * 0.05f)) * yPaddingMultiplier
+            val textX = x.toFloat() - (textBounds.width() / 2.0f)
+            val textY = y.toFloat() + (textBounds.height() / 2.0f)
 
             canvas.drawText(
                 mark,
-                x.toFloat() + xPadding,
-                y.toFloat() + yPadding,
+                textX,
+                textY,
                 textPaint
             )
-            canvas.drawPoint(
-                x.toFloat() + (xComparison * 5),
-                y.toFloat() + (yComparison * 5),
+            canvas.drawLine(
+                centerX,
+                centerY,
+                x.toFloat(),
+                y.toFloat(),
                 Paint().apply { color = Color.RED }
             )
         }
