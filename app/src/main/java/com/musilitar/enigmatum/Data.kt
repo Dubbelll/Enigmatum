@@ -20,6 +20,31 @@ data class Data(
     },
     val minuteSecondMarks: List<String> = List(60) { (it + 1).toString().padStart(2, '0') },
     val displayTwentyFourHours: Boolean = DISPLAY_TWENTY_FOUR_HOURS_DEFAULT,
+) {
+    companion object {
+        fun buildMarks(labels: List<String>): List<Mark> {
+//            val textBounds = Rect()
+//            val textPaint = Paint().apply {
+//                isAntiAlias = true
+//                textSize = context.resources.getDimensionPixelSize(textDimension).toFloat()
+//                color = colorPalette.textColor(renderParameters.drawMode)
+//            }
+//            val padding = 20f
+//            val diameter = min(bounds.width(), bounds.height()) - (2 * padding)
+//            val radius = diameter / 2.0f
+//            val centerX = bounds.exactCenterX()
+//            val centerY = bounds.exactCenterY()
+//            val slice = 2 * Math.PI / labels.size
+
+            return List<Mark>(labels.size) { index -> Mark(labels[index], 0f, 0f) }
+        }
+    }
+}
+
+data class Mark(
+    val label: String,
+    val x: Float,
+    val y: Float
 )
 
 data class ColorPalette(
