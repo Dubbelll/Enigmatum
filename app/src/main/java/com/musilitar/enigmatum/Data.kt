@@ -1,42 +1,83 @@
 package com.musilitar.enigmatum
 
 import android.content.Context
+import android.graphics.Paint
+import android.graphics.Rect
+import android.util.Log
 import androidx.annotation.ColorRes
 import androidx.annotation.StringRes
 import androidx.wear.watchface.DrawMode
 import androidx.wear.watchface.style.UserStyleSetting
 import androidx.wear.watchface.style.UserStyleSetting.ListUserStyleSetting
+import kotlin.math.cos
+import kotlin.math.min
+import kotlin.math.sin
 
 const val DISPLAY_TWENTY_FOUR_HOURS_DEFAULT = true
 
 data class Data(
     val interactiveStyle: StyleResource = StyleResource.DEFAULT,
     val ambientStyle: StyleResource = StyleResource.AMBIENT,
-    val dayHourMarks: List<String> = List(12) {
+    val dayHourLabels: List<String> = List(12) {
         (if (it == 0) 12 else it).toString().padStart(2, '0')
     },
-    val nightHourMarks: List<String> = List(12) {
-        (if (it == 0) it else it + 11).toString().padStart(2, '0')
+    val nightHourLabels: List<String> = List(12) {
+        (if (it == 0) it else it + 12).toString().padStart(2, '0')
     },
-    val minuteSecondMarks: List<String> = List(60) { (it + 1).toString().padStart(2, '0') },
+    val minuteSecondLabels: List<String> = List(60) { (it + 1).toString().padStart(2, '0') },
+    var dayHourMarks: List<Mark> = emptyList(),
+    var nightHourMarks: List<Mark> = emptyList(),
+    val minuteSecondMarks: List<Mark> = emptyList(),
     val displayTwentyFourHours: Boolean = DISPLAY_TWENTY_FOUR_HOURS_DEFAULT,
 ) {
-    companion object {
-        fun buildMarks(labels: List<String>): List<Mark> {
-//            val textBounds = Rect()
-//            val textPaint = Paint().apply {
-//                isAntiAlias = true
-//                textSize = context.resources.getDimensionPixelSize(textDimension).toFloat()
-//                color = colorPalette.textColor(renderParameters.drawMode)
-//            }
-//            val padding = 20f
-//            val diameter = min(bounds.width(), bounds.height()) - (2 * padding)
-//            val radius = diameter / 2.0f
-//            val centerX = bounds.exactCenterX()
-//            val centerY = bounds.exactCenterY()
-//            val slice = 2 * Math.PI / labels.size
+    fun buildOrUseDayHourMarks(
+        bounds: Rect,
+        textPaint: Paint,
+    ): List<Mark> {
+        if (dayHourMarks.isEmpty()) {
+            dayHourMarks = buildHourMarks(bounds, textPaint, nightHourLabels)
+        }
+        return dayHourMarks
+    }
 
-            return List<Mark>(labels.size) { index -> Mark(labels[index], 0f, 0f) }
+    fun buildOrUseNightHourMarks(
+        bounds: Rect,
+        textPaint: Paint,
+    ): List<Mark> {
+        if (nightHourMarks.isEmpty()) {
+            nightHourMarks = buildHourMarks(bounds, textPaint, nightHourLabels)
+        }
+        return nightHourMarks
+    }
+
+    companion object {
+        fun buildHourMarks(
+            bounds: Rect,
+            textPaint: Paint,
+            labels: List<String>,
+        ): List<Mark> {
+            Log.d("Data", "buildHourMarks()")
+            val textBounds = Rect()
+            val padding = 20f
+            val diameter = min(bounds.width(), bounds.height()) - (2 * padding)
+            val radius = diameter / 2.0f
+            val centerX = bounds.exactCenterX()
+            val centerY = bounds.exactCenterY()
+            val slice = 2 * Math.PI / labels.size
+
+            return List(labels.size) {
+                val label = labels[it]
+                val angle = slice * it
+                val x = centerX + (radius * cos(angle))
+                val y = centerY + (radius * sin(angle))
+
+                textPaint.getTextBounds(label, 0, label.length, textBounds)
+
+                val textX = x.toFloat() - (textBounds.width() / 2.0f)
+                val textY = y.toFloat() + (textBounds.height() / 2.0f)
+
+                Mark(label, textX, textY)
+            }
         }
     }
 }

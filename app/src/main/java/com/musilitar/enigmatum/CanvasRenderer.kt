@@ -1,7 +1,10 @@
 package com.musilitar.enigmatum
 
 import android.content.Context
-import android.graphics.*
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.Rect
 import android.util.Log
 import android.view.SurfaceHolder
 import androidx.annotation.DimenRes
@@ -12,15 +15,16 @@ import androidx.wear.watchface.style.UserStyle
 import androidx.wear.watchface.style.UserStyleSetting
 import androidx.wear.watchface.style.WatchFaceLayer
 import com.musilitar.enigmatum.ColorPalette.Companion.buildColorPalette
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
 import java.time.ZonedDateTime
-import java.util.*
-import kotlin.math.cos
-import kotlin.math.min
-import kotlin.math.sin
+import java.util.Collections
 
 class CanvasRenderer(
-    context: Context,
+    private val context: Context,
     surfaceHolder: SurfaceHolder,
     currentUserStyleRepository: CurrentUserStyleRepository,
     watchState: WatchState,
@@ -33,7 +37,6 @@ class CanvasRenderer(
     16L,
     clearWithBackgroundTintBeforeRenderingHighlightLayer = false
 ) {
-    private val context = context
     private val scope: CoroutineScope =
         CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var data: Data = Data()
@@ -59,9 +62,9 @@ class CanvasRenderer(
         }
 
         // Shift marks by a quarter because the drawing starts at the 3 o'clock position
-        Collections.rotate(data.dayHourMarks, -3)
-        Collections.rotate(data.nightHourMarks, -3)
-        Collections.rotate(data.minuteSecondMarks, -15)
+        Collections.rotate(data.dayHourLabels, -3)
+        Collections.rotate(data.nightHourLabels, -3)
+        Collections.rotate(data.minuteSecondLabels, -15)
     }
 
     private fun updateData(userStyle: UserStyle) {
@@ -120,7 +123,8 @@ class CanvasRenderer(
             drawHourMarks(
                 canvas,
                 bounds,
-                data.dayHourMarks,
+                zonedDateTime,
+                data,
                 R.dimen.hour_mark_size
             )
             // drawClockHands(canvas, bounds, zonedDateTime)
@@ -130,45 +134,27 @@ class CanvasRenderer(
     private fun drawHourMarks(
         canvas: Canvas,
         bounds: Rect,
-        marks: List<String>,
+        zonedDateTime: ZonedDateTime,
+        data: Data,
         @DimenRes textDimension: Int,
     ) {
-        val textBounds = Rect()
         val textPaint = Paint().apply {
             isAntiAlias = true
             textSize = context.resources.getDimensionPixelSize(textDimension).toFloat()
             color = colorPalette.textColor(renderParameters.drawMode)
         }
-        val padding = 20f
-        val diameter = min(bounds.width(), bounds.height()) - (2 * padding)
-        val radius = diameter / 2.0f
-        val centerX = bounds.exactCenterX()
-        val centerY = bounds.exactCenterY()
-        val slice = 2 * Math.PI / marks.size
+        val marks: List<Mark> = if (zonedDateTime.hour > 12) {
+            data.buildOrUseNightHourMarks(bounds, textPaint)
+        } else {
+            data.buildOrUseDayHourMarks(bounds, textPaint)
+        }
 
-        for (i in marks.indices) {
-            val mark = marks[i]
-            val angle = slice * i
-            val x = centerX + (radius * cos(angle))
-            val y = centerY + (radius * sin(angle))
-
-            textPaint.getTextBounds(mark, 0, mark.length, textBounds)
-
-            val textX = x.toFloat() - (textBounds.width() / 2.0f)
-            val textY = y.toFloat() + (textBounds.height() / 2.0f)
-
+        for (mark in marks) {
             canvas.drawText(
-                mark,
-                textX,
-                textY,
+                mark.label,
+                mark.x,
+                mark.y,
                 textPaint
-            )
-            canvas.drawLine(
-                centerX,
-                centerY,
-                x.toFloat(),
-                y.toFloat(),
-                Paint().apply { color = Color.RED }
             )
         }
     }
