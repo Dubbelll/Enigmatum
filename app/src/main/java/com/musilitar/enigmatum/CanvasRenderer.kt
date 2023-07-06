@@ -141,8 +141,7 @@ class CanvasRenderer(
             drawClockHands(canvas, bounds, zonedDateTime)
         }
 
-        if (renderParameters.drawMode == DrawMode.INTERACTIVE &&
-            renderParameters.watchFaceLayers.contains(WatchFaceLayer.BASE)
+        if (renderParameters.watchFaceLayers.contains(WatchFaceLayer.BASE)
         ) {
             drawHourMarks(
                 canvas,
@@ -154,11 +153,14 @@ class CanvasRenderer(
                 bounds,
                 zonedDateTime,
             )
-            drawSecondMarks(
-                canvas,
-                bounds,
-                zonedDateTime,
-            )
+
+            if (renderParameters.drawMode == DrawMode.INTERACTIVE) {
+                drawSecondMarks(
+                    canvas,
+                    bounds,
+                    zonedDateTime,
+                )
+            }
         }
     }
 
