@@ -74,7 +74,7 @@ data class Data(
             distanceFromCenterMultiplier: Float
         ): List<Mark> {
             val textBounds = Rect()
-            val padding = 20f
+            val padding = 17.5f
             val diameter = min(bounds.width(), bounds.height()) - (2 * padding)
             val radius = (diameter / 2.0f) * distanceFromCenterMultiplier
             val centerX = bounds.exactCenterX()
