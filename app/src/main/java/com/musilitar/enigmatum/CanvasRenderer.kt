@@ -22,7 +22,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import java.time.Duration
 import java.time.ZonedDateTime
 import java.util.Collections
 import kotlin.math.cos
@@ -256,32 +255,13 @@ class CanvasRenderer(
         bounds: Rect,
         zonedDateTime: ZonedDateTime
     ) {
-        // Only recalculate bounds (watch face size/surface) has changed or the arm of one of the
-        // clock hands has changed (via user input in the settings).
-        // NOTE: Watch face surface usually only updates one time (when the size of the device is
-        // initially broadcasted).
         if (currentWatchFaceSize != bounds) {
             currentWatchFaceSize = bounds
             recalculateClockHands(bounds)
         }
 
-        // Retrieve current time to calculate location/rotation of watch arms.
-        val secondOfDay = zonedDateTime.toLocalTime().toSecondOfDay()
-
-        // Determine the rotation of the hour and minute hand.
-
-        // Determine how many seconds it takes to make a complete rotation for each hand
-        // It takes the hour hand 12 hours to make a complete rotation
-        val secondsPerHourHandRotation = Duration.ofHours(12).seconds
-        // It takes the minute hand 1 hour to make a complete rotation
-        val secondsPerMinuteHandRotation = Duration.ofHours(1).seconds
-
-        // Determine the angle to draw each hand expressed as an angle in degrees from 0 to 360
-        // Since each hand does more than one cycle a day, we are only interested in the remainder
-        // of the secondOfDay modulo the hand interval
         val hourRotation = zonedDateTime.hour * 30.0f
-        val minuteRotation = secondOfDay.rem(secondsPerMinuteHandRotation) * 360.0f /
-                secondsPerMinuteHandRotation
+        val minuteRotation = zonedDateTime.minute * 6.0f
 
         canvas.withScale(
             x = WATCH_HAND_SCALE,
@@ -289,26 +269,18 @@ class CanvasRenderer(
             pivotX = bounds.exactCenterX(),
             pivotY = bounds.exactCenterY()
         ) {
-            // Draw hour hand.
             clockHandPaint.color = colorPalette.hourColor(renderParameters.drawMode)
             withRotation(hourRotation, bounds.exactCenterX(), bounds.exactCenterY()) {
                 drawPath(hourHandFill, clockHandPaint)
             }
 
-            // Draw minute hand.
             clockHandPaint.color = colorPalette.minuteColor(renderParameters.drawMode)
             withRotation(minuteRotation, bounds.exactCenterX(), bounds.exactCenterY()) {
                 drawPath(minuteHandFill, clockHandPaint)
             }
 
-            // Draw second hand if not in ambient mode
             if (renderParameters.drawMode != DrawMode.AMBIENT) {
-                // Second hand has a different color style (secondary color) and is only drawn in
-                // active mode, so we calculate it here (not above with others).
-                val secondsPerSecondHandRotation = Duration.ofMinutes(1).seconds
-                val secondsRotation = secondOfDay.rem(secondsPerSecondHandRotation) * 360.0f /
-                        secondsPerSecondHandRotation
-
+                val secondsRotation = zonedDateTime.second * 6.0f
                 clockHandPaint.color = colorPalette.secondColor(renderParameters.drawMode)
                 withRotation(secondsRotation, bounds.exactCenterX(), bounds.exactCenterY()) {
                     drawPath(secondHandFill, clockHandPaint)
@@ -317,10 +289,6 @@ class CanvasRenderer(
         }
     }
 
-    /*
-     * Rarely called (only when watch face surface changes; usually only once) from the
-     * drawClockHands() method.
-     */
     private fun recalculateClockHands(bounds: Rect) {
         val centerX = bounds.exactCenterX()
         val centerY = bounds.exactCenterY()
