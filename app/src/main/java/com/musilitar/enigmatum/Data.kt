@@ -3,7 +3,6 @@ package com.musilitar.enigmatum
 import android.content.Context
 import android.graphics.Paint
 import android.graphics.Rect
-import android.util.Log
 import androidx.annotation.ColorRes
 import androidx.annotation.StringRes
 import androidx.wear.watchface.DrawMode
@@ -56,7 +55,6 @@ data class Data(
             textPaint: Paint,
             labels: List<String>,
         ): List<Mark> {
-            Log.d("Data", "buildHourMarks()")
             val textBounds = Rect()
             val padding = 20f
             val diameter = min(bounds.width(), bounds.height()) - (2 * padding)
