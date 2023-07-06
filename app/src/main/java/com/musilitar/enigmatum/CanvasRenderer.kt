@@ -7,7 +7,6 @@ import android.graphics.Path
 import android.graphics.Rect
 import android.util.Log
 import android.view.SurfaceHolder
-import androidx.annotation.DimenRes
 import androidx.core.graphics.withRotation
 import androidx.core.graphics.withScale
 import androidx.wear.watchface.DrawMode
@@ -27,6 +26,7 @@ import java.time.Duration
 import java.time.ZonedDateTime
 import java.util.Collections
 import kotlin.math.cos
+import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sin
 
@@ -52,6 +52,14 @@ class CanvasRenderer(
         data.interactiveStyle,
         data.ambientStyle,
     )
+    private val textPaint = Paint().apply {
+        isAntiAlias = true
+        color = colorPalette.textColor(renderParameters.drawMode)
+    }
+    private val markPaint = Paint().apply {
+        isAntiAlias = true
+        color = colorPalette.backgroundColor(renderParameters.drawMode)
+    }
     private val clockHandPaint = Paint().apply {
         isAntiAlias = true
         style = Paint.Style.FILL
@@ -73,9 +81,9 @@ class CanvasRenderer(
         }
 
         // Shift marks by a quarter because the drawing starts at the 3 o'clock position
-        Collections.rotate(data.dayHourLabels, -3)
-        Collections.rotate(data.nightHourLabels, -3)
-        Collections.rotate(data.minuteSecondLabels, -15)
+        Collections.rotate(data.dayHourIntervals, -3)
+        Collections.rotate(data.nightHourIntervals, -3)
+        Collections.rotate(data.minuteSecondIntervals, -15)
     }
 
     private fun updateData(userStyle: UserStyle) {
@@ -130,15 +138,28 @@ class CanvasRenderer(
         val backgroundColor = colorPalette.backgroundColor(renderParameters.drawMode)
         canvas.drawColor(backgroundColor)
 
-        if (renderParameters.watchFaceLayers.contains(WatchFaceLayer.BASE)) {
+        if (renderParameters.watchFaceLayers.contains(WatchFaceLayer.COMPLICATIONS_OVERLAY)) {
+            drawClockHands(canvas, bounds, zonedDateTime)
+        }
+
+        if (renderParameters.drawMode == DrawMode.INTERACTIVE &&
+            renderParameters.watchFaceLayers.contains(WatchFaceLayer.BASE)
+        ) {
             drawHourMarks(
                 canvas,
                 bounds,
                 zonedDateTime,
-                data,
-                R.dimen.hour_mark_size
             )
-            drawClockHands(canvas, bounds, zonedDateTime)
+            drawMinuteMarks(
+                canvas,
+                bounds,
+                zonedDateTime,
+            )
+            drawSecondMarks(
+                canvas,
+                bounds,
+                zonedDateTime,
+            )
         }
     }
 
@@ -146,27 +167,87 @@ class CanvasRenderer(
         canvas: Canvas,
         bounds: Rect,
         zonedDateTime: ZonedDateTime,
-        data: Data,
-        @DimenRes textDimension: Int,
     ) {
-        val textPaint = Paint().apply {
-            isAntiAlias = true
-            textSize = context.resources.getDimensionPixelSize(textDimension).toFloat()
-            color = colorPalette.textColor(renderParameters.drawMode)
-        }
+        textPaint.textSize =
+            context.resources.getDimensionPixelSize(R.dimen.hour_mark_size).toFloat()
+        textPaint.color = colorPalette.textColor(renderParameters.drawMode)
+
         val marks: List<Mark> = if (zonedDateTime.hour > 12) {
             data.buildOrUseNightHourMarks(bounds, textPaint)
         } else {
             data.buildOrUseDayHourMarks(bounds, textPaint)
         }
-
         for (mark in marks) {
-            canvas.drawText(
-                mark.label,
-                mark.x,
-                mark.y,
-                textPaint
-            )
+            if (mark.interval == zonedDateTime.hour) {
+                canvas.drawCircle(
+                    mark.x + mark.bounds.exactCenterX(),
+                    mark.y + mark.bounds.exactCenterY(),
+                    max(mark.bounds.width(), mark.bounds.height()) / 2.0f + 5,
+                    markPaint
+                )
+                canvas.drawText(
+                    mark.label,
+                    mark.x,
+                    mark.y,
+                    textPaint
+                )
+            }
+        }
+    }
+
+    private fun drawMinuteMarks(
+        canvas: Canvas,
+        bounds: Rect,
+        zonedDateTime: ZonedDateTime,
+    ) {
+        textPaint.textSize =
+            context.resources.getDimensionPixelSize(R.dimen.minute_mark_size).toFloat()
+        textPaint.color = colorPalette.textColor(renderParameters.drawMode)
+
+        val marks: List<Mark> = data.buildOrUseMinuteMarks(bounds, textPaint)
+        for (mark in marks) {
+            if (mark.interval == zonedDateTime.minute) {
+                canvas.drawCircle(
+                    mark.x + mark.bounds.exactCenterX(),
+                    mark.y + mark.bounds.exactCenterY(),
+                    max(mark.bounds.width(), mark.bounds.height()) / 2.0f + 5,
+                    markPaint
+                )
+                canvas.drawText(
+                    mark.label,
+                    mark.x,
+                    mark.y,
+                    textPaint
+                )
+            }
+        }
+    }
+
+    private fun drawSecondMarks(
+        canvas: Canvas,
+        bounds: Rect,
+        zonedDateTime: ZonedDateTime,
+    ) {
+        textPaint.textSize =
+            context.resources.getDimensionPixelSize(R.dimen.second_mark_size).toFloat()
+        textPaint.color = colorPalette.textColor(renderParameters.drawMode)
+
+        val marks: List<Mark> = data.buildOrUseSecondMarks(bounds, textPaint)
+        for (mark in marks) {
+            if (mark.interval == zonedDateTime.second) {
+                canvas.drawCircle(
+                    mark.x + mark.bounds.exactCenterX(),
+                    mark.y + mark.bounds.exactCenterY(),
+                    max(mark.bounds.width(), mark.bounds.height()) / 2.0f + 5,
+                    markPaint
+                )
+                canvas.drawText(
+                    mark.label,
+                    mark.x,
+                    mark.y,
+                    textPaint
+                )
+            }
         }
     }
 
@@ -198,8 +279,7 @@ class CanvasRenderer(
         // Determine the angle to draw each hand expressed as an angle in degrees from 0 to 360
         // Since each hand does more than one cycle a day, we are only interested in the remainder
         // of the secondOfDay modulo the hand interval
-        val hourRotation = secondOfDay.rem(secondsPerHourHandRotation) * 360.0f /
-                secondsPerHourHandRotation
+        val hourRotation = zonedDateTime.hour * 30.0f
         val minuteRotation = secondOfDay.rem(secondsPerMinuteHandRotation) * 360.0f /
                 secondsPerMinuteHandRotation
 

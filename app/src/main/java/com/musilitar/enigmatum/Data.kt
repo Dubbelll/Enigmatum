@@ -17,16 +17,13 @@ const val DISPLAY_TWENTY_FOUR_HOURS_DEFAULT = true
 data class Data(
     val interactiveStyle: StyleResource = StyleResource.DEFAULT,
     val ambientStyle: StyleResource = StyleResource.AMBIENT,
-    val dayHourLabels: List<String> = List(12) {
-        (if (it == 0) 12 else it).toString().padStart(2, '0')
-    },
-    val nightHourLabels: List<String> = List(12) {
-        (if (it == 0) it else it + 12).toString().padStart(2, '0')
-    },
-    val minuteSecondLabels: List<String> = List(60) { (it + 1).toString().padStart(2, '0') },
+    val dayHourIntervals: List<Int> = List(12) { if (it == 0) 12 else it },
+    val nightHourIntervals: List<Int> = List(12) { if (it == 0) it else it + 12 },
+    val minuteSecondIntervals: List<Int> = List(60) { it },
     var dayHourMarks: List<Mark> = emptyList(),
     var nightHourMarks: List<Mark> = emptyList(),
-    val minuteSecondMarks: List<Mark> = emptyList(),
+    var minuteMarks: List<Mark> = emptyList(),
+    var secondMarks: List<Mark> = emptyList(),
     val displayTwentyFourHours: Boolean = DISPLAY_TWENTY_FOUR_HOURS_DEFAULT,
 ) {
     fun buildOrUseDayHourMarks(
@@ -34,7 +31,7 @@ data class Data(
         textPaint: Paint,
     ): List<Mark> {
         if (dayHourMarks.isEmpty()) {
-            dayHourMarks = buildHourMarks(bounds, textPaint, nightHourLabels)
+            dayHourMarks = buildMarks(bounds, textPaint, dayHourIntervals, 1.0f)
         }
         return dayHourMarks
     }
@@ -44,28 +41,50 @@ data class Data(
         textPaint: Paint,
     ): List<Mark> {
         if (nightHourMarks.isEmpty()) {
-            nightHourMarks = buildHourMarks(bounds, textPaint, nightHourLabels)
+            nightHourMarks = buildMarks(bounds, textPaint, nightHourIntervals, 1.0f)
         }
         return nightHourMarks
     }
 
+    fun buildOrUseMinuteMarks(
+        bounds: Rect,
+        textPaint: Paint,
+    ): List<Mark> {
+        if (minuteMarks.isEmpty()) {
+            minuteMarks = buildMarks(bounds, textPaint, minuteSecondIntervals, 0.5f)
+        }
+        return minuteMarks
+    }
+
+    fun buildOrUseSecondMarks(
+        bounds: Rect,
+        textPaint: Paint,
+    ): List<Mark> {
+        if (secondMarks.isEmpty()) {
+            secondMarks = buildMarks(bounds, textPaint, minuteSecondIntervals, 0.25f)
+        }
+        return secondMarks
+    }
+
     companion object {
-        fun buildHourMarks(
+        fun buildMarks(
             bounds: Rect,
             textPaint: Paint,
-            labels: List<String>,
+            intervals: List<Int>,
+            distanceFromCenterMultiplier: Float
         ): List<Mark> {
             val textBounds = Rect()
             val padding = 20f
             val diameter = min(bounds.width(), bounds.height()) - (2 * padding)
-            val radius = diameter / 2.0f
+            val radius = (diameter / 2.0f) * distanceFromCenterMultiplier
             val centerX = bounds.exactCenterX()
             val centerY = bounds.exactCenterY()
-            val slice = 2 * Math.PI / labels.size
+            val slice = 2 * Math.PI / intervals.size
 
-            return List(labels.size) {
-                val label = labels[it]
-                val angle = slice * it
+            return List(intervals.size) { index ->
+                val interval = intervals[index]
+                val label = interval.toString().padStart(2, '0')
+                val angle = slice * index
                 val x = centerX + (radius * cos(angle))
                 val y = centerY + (radius * sin(angle))
 
@@ -74,16 +93,18 @@ data class Data(
                 val textX = x.toFloat() - (textBounds.width() / 2.0f)
                 val textY = y.toFloat() + (textBounds.height() / 2.0f)
 
-                Mark(label, textX, textY)
+                Mark(interval, label, textX, textY, textBounds)
             }
         }
     }
 }
 
 data class Mark(
+    val interval: Int,
     val label: String,
     val x: Float,
-    val y: Float
+    val y: Float,
+    val bounds: Rect
 )
 
 data class ColorPalette(
