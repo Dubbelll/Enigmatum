@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <dimen name="hour_mark_size">12.5sp</dimen>
-    <dimen name="minute_mark_size">10sp</dimen>
-    <dimen name="second_mark_size">7.5sp</dimen>
+    <dimen name="hour_mark_size">16sp</dimen>
+    <dimen name="minute_mark_size">13sp</dimen>
+    <dimen name="second_mark_size">10sp</dimen>
 </resources>

@@ -54,6 +54,7 @@ class CanvasRenderer(
     private val textPaint = Paint().apply {
         isAntiAlias = true
         color = colorPalette.textColor(renderParameters.drawMode)
+        typeface = context.resources.getFont(R.font.fira_mono_regular)
     }
     private val markPaint = Paint().apply {
         isAntiAlias = true
@@ -183,7 +184,7 @@ class CanvasRenderer(
                 canvas.drawCircle(
                     mark.x + mark.bounds.exactCenterX(),
                     mark.y + mark.bounds.exactCenterY(),
-                    max(mark.bounds.width(), mark.bounds.height()) / 2.0f + 5,
+                    max(mark.bounds.width(), mark.bounds.height()) / 2.0f + data.markPadding,
                     markPaint
                 )
                 canvas.drawText(
@@ -211,7 +212,7 @@ class CanvasRenderer(
                 canvas.drawCircle(
                     mark.x + mark.bounds.exactCenterX(),
                     mark.y + mark.bounds.exactCenterY(),
-                    max(mark.bounds.width(), mark.bounds.height()) / 2.0f + 5,
+                    max(mark.bounds.width(), mark.bounds.height()) / 2.0f + data.markPadding,
                     markPaint
                 )
                 canvas.drawText(
@@ -239,7 +240,7 @@ class CanvasRenderer(
                 canvas.drawCircle(
                     mark.x + mark.bounds.exactCenterX(),
                     mark.y + mark.bounds.exactCenterY(),
-                    max(mark.bounds.width(), mark.bounds.height()) / 2.0f + 5,
+                    max(mark.bounds.width(), mark.bounds.height()) / 2.0f + data.markPadding,
                     markPaint
                 )
                 canvas.drawText(

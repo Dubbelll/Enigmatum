@@ -24,6 +24,7 @@ data class Data(
     var nightHourMarks: List<Mark> = emptyList(),
     var minuteMarks: List<Mark> = emptyList(),
     var secondMarks: List<Mark> = emptyList(),
+    val markPadding: Int = 10,
     val displayTwentyFourHours: Boolean = DISPLAY_TWENTY_FOUR_HOURS_DEFAULT,
 ) {
     fun buildOrUseDayHourMarks(
