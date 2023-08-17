@@ -4,10 +4,7 @@ import android.content.Context
 import android.graphics.Paint
 import android.graphics.Rect
 import androidx.annotation.ColorRes
-import androidx.annotation.StringRes
 import androidx.wear.watchface.DrawMode
-import androidx.wear.watchface.style.UserStyleSetting
-import androidx.wear.watchface.style.UserStyleSetting.ListUserStyleSetting
 import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.sin
@@ -18,7 +15,7 @@ data class Data(
     val interactiveStyle: StyleResource = StyleResource.DEFAULT,
     val ambientStyle: StyleResource = StyleResource.AMBIENT,
     val dayHourIntervals: List<Int> = List(12) { if (it == 0) 12 else it },
-    val nightHourIntervals: List<Int> = List(12) { if (it == 0) it else it + 12 },
+    val nightHourIntervals: List<Int> = List(12) { if (it == 0) 0 else it + 12 },
     val minuteSecondIntervals: List<Int> = List(60) { it },
     var dayHourMarks: List<Mark> = emptyList(),
     var nightHourMarks: List<Mark> = emptyList(),
@@ -165,15 +162,7 @@ data class ColorPalette(
     }
 }
 
-const val DEFAULT_STYLE_ID = "default_style_id"
-private const val DEFAULT_STYLE_NAME_RESOURCE_ID = R.string.default_style_name
-
-const val AMBIENT_STYLE_ID = "ambient_style_id"
-private const val AMBIENT_STYLE_NAME_RESOURCE_ID = R.string.ambient_style_name
-
 enum class StyleResource(
-    val id: String,
-    @StringRes val nameId: Int,
     @ColorRes val hourColorId: Int,
     @ColorRes val minuteColorId: Int,
     @ColorRes val secondColorId: Int,
@@ -181,8 +170,6 @@ enum class StyleResource(
     @ColorRes val textColorId: Int,
 ) {
     DEFAULT(
-        id = DEFAULT_STYLE_ID,
-        nameId = DEFAULT_STYLE_NAME_RESOURCE_ID,
         hourColorId = R.color.default_hour,
         minuteColorId = R.color.default_minute,
         secondColorId = R.color.default_second,
@@ -190,35 +177,10 @@ enum class StyleResource(
         textColorId = R.color.default_text,
     ),
     AMBIENT(
-        id = AMBIENT_STYLE_ID,
-        nameId = AMBIENT_STYLE_NAME_RESOURCE_ID,
         hourColorId = R.color.ambient_hour,
         minuteColorId = R.color.ambient_minute,
         secondColorId = R.color.ambient_second,
         backgroundColorId = R.color.ambient_background,
         textColorId = R.color.ambient_text,
     );
-
-    companion object {
-        fun findStyleResourceById(id: String): StyleResource {
-            return when (id) {
-                DEFAULT.id -> DEFAULT
-                AMBIENT.id -> AMBIENT
-                else -> DEFAULT
-            }
-        }
-
-        fun buildUserStyleOptions(context: Context): List<ListUserStyleSetting.ListOption> {
-            val styleResources = enumValues<StyleResource>()
-
-            return styleResources.map { styleResource ->
-                ListUserStyleSetting.ListOption(
-                    UserStyleSetting.Option.Id(styleResource.id),
-                    context.resources,
-                    styleResource.nameId,
-                    null,
-                )
-            }
-        }
-    }
 }
