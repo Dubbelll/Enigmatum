@@ -2,9 +2,11 @@ package com.musilitar.enigmatum
 
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.Rect
+import android.graphics.Shader
 import android.util.Log
 import android.view.SurfaceHolder
 import androidx.core.graphics.withRotation
@@ -51,6 +53,14 @@ class CanvasRenderer(
         data.interactiveStyle,
         data.ambientStyle,
     )
+    private var interactiveBackgroundPaint = Paint().apply {
+        isAntiAlias = true
+        color = colorPalette.backgroundColor(renderParameters.drawMode)
+    }
+    private var ambientBackgroundPaint = Paint().apply {
+        isAntiAlias = true
+        color = colorPalette.backgroundColor(renderParameters.drawMode)
+    }
     private val textPaint = Paint().apply {
         isAntiAlias = true
         color = colorPalette.textColor(renderParameters.drawMode)
@@ -64,10 +74,18 @@ class CanvasRenderer(
         isAntiAlias = true
         style = Paint.Style.FILL
     }
+    private val borderPaint = Paint().apply {
+        isAntiAlias = true
+        color = colorPalette.backgroundColor(renderParameters.drawMode)
+    }
 
     private lateinit var hourHandFill: Path
     private lateinit var minuteHandFill: Path
     private lateinit var secondHandFill: Path
+
+    private lateinit var hourHandBorder: Path
+    private lateinit var minuteHandBorder: Path
+    private lateinit var secondHandBorder: Path
 
     // Default size of watch face drawing area, that is, a no size rectangle.
     // Will be replaced with valid dimensions from the system.
@@ -135,13 +153,19 @@ class CanvasRenderer(
         zonedDateTime: ZonedDateTime,
         sharedAssets: SharedAssets
     ) {
-        val backgroundColor = colorPalette.backgroundColor(renderParameters.drawMode)
-        canvas.drawColor(backgroundColor)
+        // Background
+        if (renderParameters.drawMode == DrawMode.INTERACTIVE) {
+            canvas.drawPaint(interactiveBackgroundPaint)
+        } else {
+            canvas.drawPaint(ambientBackgroundPaint)
+        }
 
+        // Hands
         if (renderParameters.watchFaceLayers.contains(WatchFaceLayer.COMPLICATIONS_OVERLAY)) {
             drawClockHands(canvas, bounds, zonedDateTime)
         }
 
+        // Marks
         if (renderParameters.watchFaceLayers.contains(WatchFaceLayer.BASE)
         ) {
             drawHourMarks(
@@ -163,6 +187,14 @@ class CanvasRenderer(
                 )
             }
         }
+
+        // Center
+        canvas.drawCircle(
+            bounds.exactCenterX(),
+            bounds.exactCenterY(),
+            data.borderThickness,
+            borderPaint
+        )
     }
 
     private fun drawHourMarks(
@@ -260,6 +292,24 @@ class CanvasRenderer(
     ) {
         if (currentWatchFaceSize != bounds) {
             currentWatchFaceSize = bounds
+            interactiveBackgroundPaint.shader = LinearGradient(
+                0f,
+                0f,
+                0f,
+                bounds.height().toFloat(),
+                colorPalette.hourColor(DrawMode.INTERACTIVE),
+                colorPalette.minuteColor(DrawMode.INTERACTIVE),
+                Shader.TileMode.MIRROR
+            )
+            ambientBackgroundPaint.shader = LinearGradient(
+                0f,
+                0f,
+                0f,
+                bounds.height().toFloat(),
+                colorPalette.hourColor(DrawMode.AMBIENT),
+                colorPalette.minuteColor(DrawMode.AMBIENT),
+                Shader.TileMode.MIRROR
+            )
             recalculateClockHands(bounds)
         }
 
@@ -274,11 +324,13 @@ class CanvasRenderer(
         ) {
             clockHandPaint.color = colorPalette.hourColor(renderParameters.drawMode)
             withRotation(hourRotation, bounds.exactCenterX(), bounds.exactCenterY()) {
+                drawPath(hourHandBorder, borderPaint)
                 drawPath(hourHandFill, clockHandPaint)
             }
 
             clockHandPaint.color = colorPalette.minuteColor(renderParameters.drawMode)
             withRotation(minuteRotation, bounds.exactCenterX(), bounds.exactCenterY()) {
+                drawPath(minuteHandBorder, borderPaint)
                 drawPath(minuteHandFill, clockHandPaint)
             }
 
@@ -286,6 +338,7 @@ class CanvasRenderer(
                 val secondsRotation = zonedDateTime.second * 6.0f
                 clockHandPaint.color = colorPalette.secondColor(renderParameters.drawMode)
                 withRotation(secondsRotation, bounds.exactCenterX(), bounds.exactCenterY()) {
+                    drawPath(secondHandBorder, borderPaint)
                     drawPath(secondHandFill, clockHandPaint)
                 }
             }
@@ -301,15 +354,34 @@ class CanvasRenderer(
             traceTriangle(
                 centerX,
                 centerY,
-                radius,
+                radius - data.borderThickness,
             )
         minuteHandFill =
             traceTriangle(
                 centerX,
                 centerY,
-                radius / 2,
+                (radius / 2) - data.borderThickness,
             )
         secondHandFill =
+            traceTriangle(
+                centerX,
+                centerY,
+                (radius / 4) - data.borderThickness,
+            )
+
+        hourHandBorder =
+            traceTriangle(
+                centerX,
+                centerY,
+                radius,
+            )
+        minuteHandBorder =
+            traceTriangle(
+                centerX,
+                centerY,
+                radius / 2,
+            )
+        secondHandBorder =
             traceTriangle(
                 centerX,
                 centerY,

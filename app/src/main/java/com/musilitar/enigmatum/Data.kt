@@ -22,6 +22,7 @@ data class Data(
     var minuteMarks: List<Mark> = emptyList(),
     var secondMarks: List<Mark> = emptyList(),
     val markPadding: Int = 10,
+    val borderThickness: Float = 5f,
     val displayTwentyFourHours: Boolean = DISPLAY_TWENTY_FOUR_HOURS_DEFAULT,
 ) {
     fun buildOrUseDayHourMarks(
@@ -39,7 +40,7 @@ data class Data(
         textPaint: Paint,
     ): List<Mark> {
         if (nightHourMarks.isEmpty()) {
-            nightHourMarks = buildMarks(bounds, textPaint, nightHourIntervals, 1.0f)
+            nightHourMarks = buildMarks(bounds, textPaint, nightHourIntervals, 0.95f)
         }
         return nightHourMarks
     }
