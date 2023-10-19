@@ -55,28 +55,28 @@ class CanvasRenderer(
     )
     private var interactiveBackgroundPaint = Paint().apply {
         isAntiAlias = true
-        color = colorPalette.backgroundColor(renderParameters.drawMode)
+        color = colorPalette.borderColor(renderParameters.drawMode)
     }
     private var ambientBackgroundPaint = Paint().apply {
         isAntiAlias = true
-        color = colorPalette.backgroundColor(renderParameters.drawMode)
+        color = colorPalette.borderColor(renderParameters.drawMode)
+    }
+    private val markPaint = Paint().apply {
+        isAntiAlias = true
+        color = colorPalette.markColor(renderParameters.drawMode)
+    }
+    private val borderPaint = Paint().apply {
+        isAntiAlias = true
+        color = colorPalette.borderColor(renderParameters.drawMode)
     }
     private val textPaint = Paint().apply {
         isAntiAlias = true
         color = colorPalette.textColor(renderParameters.drawMode)
         typeface = context.resources.getFont(R.font.fira_mono_regular)
     }
-    private val markPaint = Paint().apply {
-        isAntiAlias = true
-        color = colorPalette.backgroundColor(renderParameters.drawMode)
-    }
     private val clockHandPaint = Paint().apply {
         isAntiAlias = true
         style = Paint.Style.FILL
-    }
-    private val borderPaint = Paint().apply {
-        isAntiAlias = true
-        color = colorPalette.backgroundColor(renderParameters.drawMode)
     }
 
     private lateinit var hourHandFill: Path
@@ -202,9 +202,7 @@ class CanvasRenderer(
         bounds: Rect,
         zonedDateTime: ZonedDateTime,
     ) {
-        textPaint.textSize =
-            context.resources.getDimensionPixelSize(R.dimen.hour_mark_size).toFloat()
-        textPaint.color = colorPalette.textColor(renderParameters.drawMode)
+        updateMarkPaints(R.dimen.hour_mark_size)
 
         val marks: List<Mark> = if (zonedDateTime.hour > 12) {
             data.buildOrUseNightHourMarks(bounds, textPaint)
@@ -213,18 +211,7 @@ class CanvasRenderer(
         }
         for (mark in marks) {
             if (mark.interval == zonedDateTime.hour) {
-                canvas.drawCircle(
-                    mark.x + mark.bounds.exactCenterX(),
-                    mark.y + mark.bounds.exactCenterY(),
-                    max(mark.bounds.width(), mark.bounds.height()) / 2.0f + data.markPadding,
-                    markPaint
-                )
-                canvas.drawText(
-                    mark.label,
-                    mark.x,
-                    mark.y,
-                    textPaint
-                )
+                drawMark(canvas, mark)
             }
         }
     }
@@ -234,25 +221,12 @@ class CanvasRenderer(
         bounds: Rect,
         zonedDateTime: ZonedDateTime,
     ) {
-        textPaint.textSize =
-            context.resources.getDimensionPixelSize(R.dimen.minute_mark_size).toFloat()
-        textPaint.color = colorPalette.textColor(renderParameters.drawMode)
+        updateMarkPaints(R.dimen.minute_mark_size)
 
         val marks: List<Mark> = data.buildOrUseMinuteMarks(bounds, textPaint)
         for (mark in marks) {
             if (mark.interval == zonedDateTime.minute) {
-                canvas.drawCircle(
-                    mark.x + mark.bounds.exactCenterX(),
-                    mark.y + mark.bounds.exactCenterY(),
-                    max(mark.bounds.width(), mark.bounds.height()) / 2.0f + data.markPadding,
-                    markPaint
-                )
-                canvas.drawText(
-                    mark.label,
-                    mark.x,
-                    mark.y,
-                    textPaint
-                )
+                drawMark(canvas, mark)
             }
         }
     }
@@ -262,27 +236,48 @@ class CanvasRenderer(
         bounds: Rect,
         zonedDateTime: ZonedDateTime,
     ) {
-        textPaint.textSize =
-            context.resources.getDimensionPixelSize(R.dimen.second_mark_size).toFloat()
-        textPaint.color = colorPalette.textColor(renderParameters.drawMode)
+        updateMarkPaints(R.dimen.second_mark_size)
 
         val marks: List<Mark> = data.buildOrUseSecondMarks(bounds, textPaint)
         for (mark in marks) {
             if (mark.interval == zonedDateTime.second) {
-                canvas.drawCircle(
-                    mark.x + mark.bounds.exactCenterX(),
-                    mark.y + mark.bounds.exactCenterY(),
-                    max(mark.bounds.width(), mark.bounds.height()) / 2.0f + data.markPadding,
-                    markPaint
-                )
-                canvas.drawText(
-                    mark.label,
-                    mark.x,
-                    mark.y,
-                    textPaint
-                )
+                drawMark(canvas, mark)
             }
         }
+    }
+
+    private fun drawMark(
+        canvas: Canvas,
+        mark: Mark,
+    ) {
+        canvas.drawCircle(
+            mark.x + mark.bounds.exactCenterX(),
+            mark.y + mark.bounds.exactCenterY(),
+            max(mark.bounds.width(), mark.bounds.height()) / 2.0f + data.markPadding,
+            borderPaint
+        )
+        canvas.drawCircle(
+            mark.x + mark.bounds.exactCenterX(),
+            mark.y + mark.bounds.exactCenterY(),
+            max(
+                mark.bounds.width(),
+                mark.bounds.height()
+            ) / 2.0f + data.markPadding - (data.borderThickness / 2),
+            markPaint
+        )
+        canvas.drawText(
+            mark.label,
+            mark.x,
+            mark.y,
+            textPaint
+        )
+    }
+
+    private fun updateMarkPaints(textSize: Int) {
+        markPaint.color = colorPalette.markColor(renderParameters.drawMode)
+        textPaint.color = colorPalette.textColor(renderParameters.drawMode)
+        textPaint.textSize =
+            context.resources.getDimensionPixelSize(textSize).toFloat()
     }
 
     private fun drawClockHands(

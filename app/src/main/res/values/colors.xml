@@ -3,11 +3,13 @@
     <color name="default_hour">#FFC107</color>
     <color name="default_minute">#E91E63</color>
     <color name="default_second">#F3F3F3</color>
-    <color name="default_background">#0C0C0C</color>
-    <color name="default_text">#F3F3F3</color>
+    <color name="default_mark">#F3F3F3</color>
+    <color name="default_border">#0C0C0C</color>
+    <color name="default_text">#0C0C0C</color>
     <color name="ambient_hour">#404040</color>
     <color name="ambient_minute">#626262</color>
     <color name="ambient_second">#949494</color>
-    <color name="ambient_background">#0C0C0C</color>
-    <color name="ambient_text">#F3F3F3</color>
+    <color name="ambient_mark">#949494</color>
+    <color name="ambient_border">#0C0C0C</color>
+    <color name="ambient_text">#0C0C0C</color>
 </resources>

@@ -30,7 +30,7 @@ data class Data(
         textPaint: Paint,
     ): List<Mark> {
         if (dayHourMarks.isEmpty()) {
-            dayHourMarks = buildMarks(bounds, textPaint, dayHourIntervals, 1.0f)
+            dayHourMarks = buildMarks(bounds, textPaint, dayHourIntervals, 0.9275f)
         }
         return dayHourMarks
     }
@@ -40,7 +40,7 @@ data class Data(
         textPaint: Paint,
     ): List<Mark> {
         if (nightHourMarks.isEmpty()) {
-            nightHourMarks = buildMarks(bounds, textPaint, nightHourIntervals, 0.95f)
+            nightHourMarks = buildMarks(bounds, textPaint, nightHourIntervals, 0.9275f)
         }
         return nightHourMarks
     }
@@ -110,12 +110,14 @@ data class ColorPalette(
     val interactiveHourColor: Int,
     val interactiveMinuteColor: Int,
     val interactiveSecondColor: Int,
-    val interactiveBackgroundColor: Int,
+    val interactiveMarkColor: Int,
+    val interactiveBorderColor: Int,
     val interactiveTextColor: Int,
     val ambientHourColor: Int,
     val ambientMinuteColor: Int,
     val ambientSecondColor: Int,
-    val ambientBackgroundColor: Int,
+    val ambientMarkColor: Int,
+    val ambientBorderColor: Int,
     val ambientTextColor: Int,
 ) {
     fun hourColor(drawMode: DrawMode): Int {
@@ -133,9 +135,14 @@ data class ColorPalette(
         else interactiveSecondColor
     }
 
-    fun backgroundColor(drawMode: DrawMode): Int {
-        return if (drawMode == DrawMode.AMBIENT) ambientBackgroundColor
-        else interactiveBackgroundColor
+    fun markColor(drawMode: DrawMode): Int {
+        return if (drawMode == DrawMode.AMBIENT) ambientMarkColor
+        else interactiveMarkColor
+    }
+
+    fun borderColor(drawMode: DrawMode): Int {
+        return if (drawMode == DrawMode.AMBIENT) ambientBorderColor
+        else interactiveBorderColor
     }
 
     fun textColor(drawMode: DrawMode): Int {
@@ -151,12 +158,14 @@ data class ColorPalette(
                 interactiveHourColor = context.getColor(interactiveStyle.hourColorId),
                 interactiveMinuteColor = context.getColor(interactiveStyle.minuteColorId),
                 interactiveSecondColor = context.getColor(interactiveStyle.secondColorId),
-                interactiveBackgroundColor = context.getColor(interactiveStyle.backgroundColorId),
+                interactiveMarkColor = context.getColor(interactiveStyle.markColorId),
+                interactiveBorderColor = context.getColor(interactiveStyle.borderColorId),
                 interactiveTextColor = context.getColor(interactiveStyle.textColorId),
                 ambientHourColor = context.getColor(ambientStyle.hourColorId),
                 ambientMinuteColor = context.getColor(ambientStyle.minuteColorId),
                 ambientSecondColor = context.getColor(ambientStyle.secondColorId),
-                ambientBackgroundColor = context.getColor(ambientStyle.backgroundColorId),
+                ambientMarkColor = context.getColor(ambientStyle.markColorId),
+                ambientBorderColor = context.getColor(ambientStyle.borderColorId),
                 ambientTextColor = context.getColor(ambientStyle.textColorId),
             )
         }
@@ -167,21 +176,24 @@ enum class StyleResource(
     @ColorRes val hourColorId: Int,
     @ColorRes val minuteColorId: Int,
     @ColorRes val secondColorId: Int,
-    @ColorRes val backgroundColorId: Int,
+    @ColorRes val markColorId: Int,
+    @ColorRes val borderColorId: Int,
     @ColorRes val textColorId: Int,
 ) {
     DEFAULT(
         hourColorId = R.color.default_hour,
         minuteColorId = R.color.default_minute,
         secondColorId = R.color.default_second,
-        backgroundColorId = R.color.default_background,
+        markColorId = R.color.default_mark,
+        borderColorId = R.color.default_border,
         textColorId = R.color.default_text,
     ),
     AMBIENT(
         hourColorId = R.color.ambient_hour,
         minuteColorId = R.color.ambient_minute,
         secondColorId = R.color.ambient_second,
-        backgroundColorId = R.color.ambient_background,
+        markColorId = R.color.ambient_mark,
+        borderColorId = R.color.ambient_border,
         textColorId = R.color.ambient_text,
     );
 }
