@@ -21,6 +21,7 @@ data class Data(
     var nightHourMarks: List<Mark> = emptyList(),
     var minuteMarks: List<Mark> = emptyList(),
     var secondMarks: List<Mark> = emptyList(),
+    val clockPadding: Float = 17.5f,
     val markPadding: Int = 10,
     val borderThickness: Float = 5f,
     val displayTwentyFourHours: Boolean = DISPLAY_TWENTY_FOUR_HOURS_DEFAULT,
@@ -30,7 +31,15 @@ data class Data(
         textPaint: Paint,
     ): List<Mark> {
         if (dayHourMarks.isEmpty()) {
-            dayHourMarks = buildMarks(bounds, textPaint, dayHourIntervals, 0.9275f)
+            val diameter = min(bounds.width(), bounds.height())
+            val paddingPercentageOfDiameter = (clockPadding + borderThickness) / diameter
+            dayHourMarks = buildMarks(
+                bounds,
+                textPaint,
+                dayHourIntervals,
+                clockPadding,
+                1f - paddingPercentageOfDiameter
+            )
         }
         return dayHourMarks
     }
@@ -40,7 +49,16 @@ data class Data(
         textPaint: Paint,
     ): List<Mark> {
         if (nightHourMarks.isEmpty()) {
-            nightHourMarks = buildMarks(bounds, textPaint, nightHourIntervals, 0.9275f)
+            val diameter = min(bounds.width(), bounds.height())
+            val paddingPercentageOfDiameter = (clockPadding + borderThickness) / diameter
+            nightHourMarks =
+                buildMarks(
+                    bounds,
+                    textPaint,
+                    nightHourIntervals,
+                    clockPadding,
+                    1f - paddingPercentageOfDiameter
+                )
         }
         return nightHourMarks
     }
@@ -50,7 +68,7 @@ data class Data(
         textPaint: Paint,
     ): List<Mark> {
         if (minuteMarks.isEmpty()) {
-            minuteMarks = buildMarks(bounds, textPaint, minuteSecondIntervals, 0.5f)
+            minuteMarks = buildMarks(bounds, textPaint, minuteSecondIntervals, clockPadding, 0.5f)
         }
         return minuteMarks
     }
@@ -60,7 +78,7 @@ data class Data(
         textPaint: Paint,
     ): List<Mark> {
         if (secondMarks.isEmpty()) {
-            secondMarks = buildMarks(bounds, textPaint, minuteSecondIntervals, 0.25f)
+            secondMarks = buildMarks(bounds, textPaint, minuteSecondIntervals, clockPadding, 0.25f)
         }
         return secondMarks
     }
@@ -70,11 +88,11 @@ data class Data(
             bounds: Rect,
             textPaint: Paint,
             intervals: List<Int>,
+            clockPadding: Float,
             distanceFromCenterMultiplier: Float
         ): List<Mark> {
             val textBounds = Rect()
-            val padding = 17.5f
-            val diameter = min(bounds.width(), bounds.height()) - (2 * padding)
+            val diameter = min(bounds.width(), bounds.height()) - (2 * clockPadding)
             val radius = (diameter / 2.0f) * distanceFromCenterMultiplier
             val centerX = bounds.exactCenterX()
             val centerY = bounds.exactCenterY()
