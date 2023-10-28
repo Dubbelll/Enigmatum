@@ -15,15 +15,12 @@ import androidx.wear.watchface.DrawMode
 import androidx.wear.watchface.Renderer
 import androidx.wear.watchface.WatchState
 import androidx.wear.watchface.style.CurrentUserStyleRepository
-import androidx.wear.watchface.style.UserStyle
-import androidx.wear.watchface.style.UserStyleSetting
 import androidx.wear.watchface.style.WatchFaceLayer
 import com.musilitar.enigmatum.ColorPalette.Companion.buildColorPalette
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
 import java.time.ZonedDateTime
 import java.util.Collections
 import kotlin.math.cos
@@ -92,43 +89,10 @@ class CanvasRenderer(
     private var currentWatchFaceSize = Rect(0, 0, 0, 0)
 
     init {
-        scope.launch {
-            currentUserStyleRepository.userStyle.collect { userStyle ->
-                updateData(userStyle)
-            }
-        }
-
         // Shift marks by a quarter because the drawing starts at the 3 o'clock position
         Collections.rotate(data.dayHourIntervals, -3)
         Collections.rotate(data.nightHourIntervals, -3)
         Collections.rotate(data.minuteSecondIntervals, -15)
-    }
-
-    private fun updateData(userStyle: UserStyle) {
-        Log.d(TAG, "updateData(): $userStyle")
-
-        var updatedData: Data = data
-        for (entry in userStyle) {
-            when (entry.key.id.toString()) {
-                DISPLAY_TWENTY_FOUR_HOURS_SETTING -> {
-                    val option =
-                        entry.value as UserStyleSetting.BooleanUserStyleSetting.BooleanOption
-
-                    updatedData = updatedData.copy(
-                        displayTwentyFourHours = option.value
-                    )
-                }
-            }
-        }
-
-        if (data != updatedData) {
-            data = updatedData
-            colorPalette = buildColorPalette(
-                context,
-                data.interactiveStyle,
-                data.ambientStyle
-            )
-        }
     }
 
     override fun onDestroy() {

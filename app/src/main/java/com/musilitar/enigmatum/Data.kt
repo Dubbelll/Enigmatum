@@ -31,14 +31,12 @@ data class Data(
         textPaint: Paint,
     ): List<Mark> {
         if (dayHourMarks.isEmpty()) {
-            val diameter = min(bounds.width(), bounds.height())
-            val paddingPercentageOfDiameter = (clockPadding + borderThickness) / diameter
             dayHourMarks = buildMarks(
                 bounds,
                 textPaint,
                 dayHourIntervals,
                 clockPadding,
-                1f - paddingPercentageOfDiameter
+                1f - calculatePaddingPercentageOfDiameter(bounds)
             )
         }
         return dayHourMarks
@@ -49,15 +47,13 @@ data class Data(
         textPaint: Paint,
     ): List<Mark> {
         if (nightHourMarks.isEmpty()) {
-            val diameter = min(bounds.width(), bounds.height())
-            val paddingPercentageOfDiameter = (clockPadding + borderThickness) / diameter
             nightHourMarks =
                 buildMarks(
                     bounds,
                     textPaint,
                     nightHourIntervals,
                     clockPadding,
-                    1f - paddingPercentageOfDiameter
+                    1f - calculatePaddingPercentageOfDiameter(bounds)
                 )
         }
         return nightHourMarks
@@ -81,6 +77,13 @@ data class Data(
             secondMarks = buildMarks(bounds, textPaint, minuteSecondIntervals, clockPadding, 0.25f)
         }
         return secondMarks
+    }
+
+    fun calculatePaddingPercentageOfDiameter(
+        bounds: Rect,
+    ): Float {
+        val diameter = min(bounds.width(), bounds.height())
+        return (markPadding + borderThickness) / diameter
     }
 
     companion object {
