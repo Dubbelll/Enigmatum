@@ -21,7 +21,7 @@ data class Data(
     var nightHourMarks: List<Mark> = emptyList(),
     var minuteMarks: List<Mark> = emptyList(),
     var secondMarks: List<Mark> = emptyList(),
-    val clockPadding: Float = 17.5f,
+    val clockPadding: Float = 20f,
     val markPadding: Int = 10,
     val borderThickness: Float = 5f,
     val displayTwentyFourHours: Boolean = DISPLAY_TWENTY_FOUR_HOURS_DEFAULT,
